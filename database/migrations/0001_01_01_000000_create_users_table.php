@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
@@ -23,7 +20,7 @@ return new class extends Migration
             $table->string('phoneNumber')->nullable(); 
             $table->date('dob')->nullable(); 
             $table->string('job')->nullable(); 
-            $table->string('relationship')->nullable();$table->boolean('dark_mode')->default(true);
+            $table->string('relationship')->nullable();
             $table->enum('language', ['en', 'vn'])->default('en');
             $table->enum('dark_mode', ['light', 'dark'])->default('dark');
             $table->rememberToken();
@@ -45,10 +42,6 @@ return new class extends Migration
             $table->integer('last_activity')->index();
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');
