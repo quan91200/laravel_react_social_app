@@ -1,18 +1,19 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
-import Dropdown from '@/Components/Dropdown';
-import NavLink from '@/Components/NavLink';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
-import { Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import ApplicationLogo from '@/Components/ApplicationLogo'
+import Dropdown from '@/Components/Dropdown'
+import NavLink from '@/Components/NavLink'
+import ResponsiveNavLink from '@/Components/ResponsiveNavLink'
+import { Link, usePage } from '@inertiajs/react'
+import { useState } from 'react'
+import { IoIosNotificationsOutline } from "react-icons/io"
+import { CiMail } from "react-icons/ci"
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
-
+    const auth = usePage().props.auth.user
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
-        useState(false);
+        useState(false)
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-            <nav className="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800">
+            <nav className="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800 fixed top-0 w-full z-10">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 justify-between">
                         <div className="flex">
@@ -30,46 +31,57 @@ export default function AuthenticatedLayout({ header, children }) {
                                     Dashboard
                                 </NavLink>
                                 <NavLink
-                                    href={route('user.show', user.id)}
-                                    active={route().current('user.show')}
+                                    href={route('posts.index')}
+                                    active={route().current('posts.index')}
                                 >
-                                    User Profile
+                                    Post
                                 </NavLink>
                             </div>
                         </div>
 
                         <div className="hidden sm:ms-6 sm:flex sm:items-center">
-                            <div className="relative ms-3">
+                            <div className="relative flex items-center space-x-3">
+                                <div className='h-8 w-8 flex items-center justify-center border border-gray-500 dark:text-gray-500 dark:hover:border-gray-300 dark:hover:text-gray-300 rounded cursor-pointer'>
+                                    <CiMail size={20} />
+                                </div>
                                 <Dropdown>
                                     <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-md">
+                                        <div className='h-8 w-8 flex items-center justify-center border border-gray-500 dark:text-gray-500 dark:hover:border-gray-300 dark:hover:text-gray-300 rounded cursor-pointer'>
+                                            <IoIosNotificationsOutline size={20} />
+                                        </div>
+                                    </Dropdown.Trigger>
+                                    <Dropdown.Content>
+                                        Mon ngu
+                                    </Dropdown.Content>
+                                </Dropdown>
+                                <Dropdown>
+                                    <Dropdown.Trigger>
+                                        <span className="inline-flex">
                                             <button
                                                 type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none dark:bg-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
+                                                className="transition duration-150 ease-in-out"
                                             >
-                                                {user.name}
-
-                                                <svg
-                                                    className="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
+                                                <div className='h-10 w-10'>
+                                                    <img
+                                                        alt='avt'
+                                                        src={
+                                                            auth.profile_pic ? `/storage/${auth.profile_pic}`
+                                                                : null
+                                                        }
+                                                        className='
+                                                            object-cover w-full h-full rounded-full border-2 
+                                                            border-blue-500'
                                                     />
-                                                </svg>
+                                                </div>
                                             </button>
                                         </span>
                                     </Dropdown.Trigger>
 
                                     <Dropdown.Content>
                                         <Dropdown.Link
-                                            href={route('profile.edit')}
+                                            href={route('users.show', auth.id)}
                                         >
-                                            Profile
+                                            {auth.name}
                                         </Dropdown.Link>
                                         <Dropdown.Link
                                             href={route('logout')}
@@ -90,7 +102,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                         (previousState) => !previousState,
                                     )
                                 }
-                                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none dark:text-gray-500 dark:hover:bg-gray-900 dark:hover:text-gray-400 dark:focus:bg-gray-900 dark:focus:text-gray-400"
+                                className="inline-flex items-center justify-center rounded-md p-2 
+                                         text-gray-400 transition duration-150 ease-in-out 
+                                         hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 
+                                         focus:text-gray-500 focus:outline-none dark:text-gray-500 
+                                         dark:hover:bg-gray-900 dark:hover:text-gray-400 
+                                         dark:focus:bg-gray-900 dark:focus:text-gray-400"
                             >
                                 <svg
                                     className="h-6 w-6"
@@ -144,17 +161,14 @@ export default function AuthenticatedLayout({ header, children }) {
                     <div className="border-t border-gray-200 pb-1 pt-4 dark:border-gray-600">
                         <div className="px-4">
                             <div className="text-base font-medium text-gray-800 dark:text-gray-200">
-                                {user.name}
+                                {auth.name}
                             </div>
                             <div className="text-sm font-medium text-gray-500">
-                                {user.email}
+                                {auth.email}
                             </div>
                         </div>
 
                         <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route('profile.edit')}>
-                                Profile
-                            </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 method="post"
                                 href={route('logout')}
@@ -175,7 +189,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </header>
             )}
 
-            <main>{children}</main>
+            <main className='pt-16 pb-4'>{children}</main>
         </div>
-    );
+    )
 }

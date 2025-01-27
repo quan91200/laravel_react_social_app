@@ -6,42 +6,41 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 class Post extends Model
 {
     use HasFactory, SoftDeletes;
-    protected $table = 'post';
+    protected $table = 'posts';
     protected $fillable = [
-        'status',
         'content',
+        'status',
         'image_url',
-        'created_by',
-        'updated_by',
+        'user_id',
         'react',
         'is_comment'
     ];
     protected $casts = [
         'is_comment' => 'boolean',
     ];
-    const STATUS_PUBLIC = 'public';
-    const STATUS_PRIVATE = 'private';
-    const STATUS_FRIEND = 'friend';
-    public static function getStatus(): array
-    {
-        return [
-            self::STATUS_PUBLIC => 'public',
-            self::STATUS_PRIVATE => 'private',
-            self::STATUS_FRIEND => 'friend',
-        ];
-    }
     // Quan hệ: 1 Bài đăng thuộc về một người dùng
-    public function creator()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'user_id');
     }
     // Quan hệ: Một bài đăng có nhiều bình luận
     public function comments()
     {
         return $this->hasMany(Comment::class, 'post_id');
+    }
+    // Quan hệ: Bình luận chưa bị xóa (soft delete) khỏi bài viết
+    public function activeComments()
+    {
+        return $this->hasMany(Comment::class)->whereNull('deleted_at');
+    }
+    // Quan hệ: Bài đăng có nhiều phản ứng
+    public function reactions()
+    {
+        return $this->morphMany(Reaction::class, 'reactable');
     }
     protected static function boot()
     {
@@ -53,38 +52,50 @@ class Post extends Model
             $post->comments()->restore();
         });
     }
-    // Lọc bài viết theo bài đăng bật comment
-    public function scopeWithComment($query)
+    // Scope lọc các bài viết có trạng thái 'public'
+    public function scopePublic($query)
+    {
+        return $query->where('status', 'public');
+    }
+    // Scope lọc các bài viết trạng thái 'friend'
+    public function scopeFriend($query, $userId)
+    {
+        return $query->where('status', 'friend')
+            ->whereIn('user_id', function ($subQuery) use ($userId) {
+                $subQuery->select('friend_id')
+                    ->from('friends')
+                    ->where('user_id', $userId)
+                    ->where('status', 'accepted');
+            });
+    }
+    // Scope lọc các bài viết trạng thái 'private'
+    public function scopePrivate($query)
+    {
+        return $query->where('status', 'private');
+    }
+    // Scope lọc các bài viết trạng thái public và friend
+    public function scopePublicAndFriend($query, $userId)
+    {
+        return $query->where(function ($query) use ($userId) {
+            $query->public() // Gọi scope Public
+                ->orWhere(function ($subQuery) use ($userId) {
+                    $subQuery->friend($userId); // Gọi scope Friend
+                });
+        });
+    }
+    // Scope lọc các bài viết được bình luận
+    public function scopeIsComment($query)
     {
         return $query->where('is_comment', true);
     }
-    // Lọc bài viết theo react
-    public function scopeReact($query, $reaction)
+    // Scope lọc các bài viết không được bình luận
+    public function scopeIsNoComment($query)
     {
-        return $query->where('react', $reaction);
+        return $query->where('is_comment', false);
     }
-    // Lọc bài viết theo quy tắc hiển thị
-    public function scopeStatus($query, $viewerId)
+    // Scope lọc bài viết theo ngày đăng
+    public function scopeCreatedAt($query)
     {
-        return $query->where(function ($query) use ($viewerId) {
-            // Public
-            $query->where('status', 'public')
-                // Friend
-                ->orWhere(function ($query) use ($viewerId){
-                    $query->where('status', 'friend')
-                        ->whereExists(function ($subQuery) use ($viewerId){
-                            $subQuery->select(DB::raw(1))
-                                ->from('follow')
-                                ->whereColumn('follow.follower_id', 'post.created_by')
-                                ->where('follow.followed_id', $viewerId)
-                                ->where('follow.is_friend', true);
-                            });
-                })
-                // Private
-                ->orWhere(function ($query) use ($viewerId) {
-                    $query->where('status', 'private')
-                        ->where('created_by', $viewerId);
-                });
-        });
+        return $query->orderBy('created_at', 'desc');
     }
 }

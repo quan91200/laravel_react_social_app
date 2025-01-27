@@ -2,51 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Http\RedirectResponse;
+use App\Http\Requests\ProfileRequest;
+use App\Http\Resources\ProfileResource;
+use App\Models\Profile;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    public function edit(Request $request): Response
+    // Hiển thị form cập nhật hồ sơ người dùng
+    public function edit(Request $request)
     {
-        return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => session('status'),
-        ]);
-    }
-    public function update(ProfileUpdateRequest $request): RedirectResponse
-    {
-        $request->user()->fill($request->validated());
-
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Kiểm tra xem người dùng có profile chưa
+        $profile = $request->user()->profile; 
+        if (!$profile) {
+            $profile = new Profile(); 
         }
-
-        $request->user()->save();
-
-        return Redirect::route('profile.edit');
-    }
-    public function destroy(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'password' => ['required', 'current_password'],
+        return inertia('Profile/Edit', [
+            'profile' => (new ProfileResource($profile))->resolve(),
+            'locations' => \App\Models\Location::all(),
         ]);
-
+    }
+    // Cập nhật thông tin hồ sơ người dùng
+    public function update(ProfileRequest $request)
+    {
         $user = $request->user();
-
-        Auth::logout();
-
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
+        $data = $request->validated();
+        // Kiểm tra xem người dùng đã có profile chưa
+        $profile = $user->profile ?: new Profile();
+        $profile->user_id = $user->id;
+        $profile->fill($data);
+        $profile->save();
+        return redirect()->route('users.edit', ['id' => $user->id]);
     }
 }
+

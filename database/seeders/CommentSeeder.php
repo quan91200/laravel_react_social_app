@@ -13,14 +13,8 @@ class CommentSeeder extends Seeder
     {
         $users = User::all();
         $posts = Post::all();
-
-        if ($users->isEmpty() || $posts->isEmpty()) {
-            $this->command->info('No users or posts found.');
-            return;
-        }
         $posts->each(function ($post) use ($users) {
             $randomUsers = $users->random(min(2, $users->count()));
-
             foreach ($randomUsers as $user) {
                 // Tạo bình luận cha
                 $parentComment = Comment::factory()->create([

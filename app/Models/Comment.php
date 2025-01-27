@@ -8,14 +8,19 @@ use Illuminate\Database\Eloquent\Model;
 class Comment extends Model
 {
     use HasFactory;
-    protected $table = 'comment';
+    protected $table = 'comments';
     protected $fillable = [
+        'content',
+        'image_url',
         'user_id',
         'post_id',
         'parent_id',
-        'content',
-        'image_url',
     ];
+    // Bình luận thuộc về một người dùng
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
     // Bình luận thuộc về một bài đăng
     public function post()
     {
@@ -26,22 +31,17 @@ class Comment extends Model
     {
         return $this->hasMany(Comment::class, 'user_id');
     }
-    // Bình luận có thể có nhiều bình luận con
-    public function children()
-    {
-        return $this->hasMany(Comment::class, 'parent_id');
-    }
-    // Bình luận có thể thuộc về 1 bình luận cha
-    public function parent()
+    public function parentComment()
     {
         return $this->belongsTo(Comment::class, 'parent_id');
     }
-    /**
-        * Lấy các bản ghi children ngay lập tức của model
-        * và tải trước mối quan hệ 'user' cho từng children.
-     */
+    // Phương thức lấy các bình luận con trực tiếp của bình luận này
     public function immediateChildren()
     {
-        return $this->children()->with('user');
+        return $this->hasMany(Comment::class, 'parent_id')->with('user');
+    }
+    public function reactions()
+    {
+        return $this->morphMany(Reaction::class, 'reactable');
     }
 }

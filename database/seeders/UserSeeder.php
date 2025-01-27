@@ -24,6 +24,8 @@ class UserSeeder extends Seeder
                 'email' => $this->getEmailFromKey($key),
                 'password' => bcrypt('12345678'),
                 'profile_pic' => $profilePic,
+                'dark_mode' => fake()->randomElement(['light', 'dark']),
+                'language' => fake()->randomElement(['en', 'vi']),
             ]);
         }
     }

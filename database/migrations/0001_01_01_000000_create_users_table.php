@@ -15,24 +15,16 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('profile_pic')->nullable();
-            $table->text('hobbies')->nullable();
-            $table->string('address')->nullable(); 
-            $table->string('phoneNumber')->nullable(); 
-            $table->date('dob')->nullable(); 
-            $table->string('job')->nullable(); 
-            $table->string('relationship')->nullable();
-            $table->enum('language', ['en', 'vn'])->default('en');
+            $table->enum('language', ['vi', 'en'])->default('en');
             $table->enum('dark_mode', ['light', 'dark'])->default('dark');
             $table->rememberToken();
             $table->timestamps();
         });
-
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
-
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();

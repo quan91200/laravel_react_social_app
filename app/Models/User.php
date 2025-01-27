@@ -7,7 +7,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Post;
 use App\Models\Comment;
-use App\Models\Follow;
+use App\Models\Friend;
+use App\Models\Reaction;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
+
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -17,12 +21,6 @@ class User extends Authenticatable
         'email',
         'password',
         'profile_pic',
-        'hobbies',
-        'address',
-        'phoneNumber',
-        'dob',
-        'job',
-        'relationship',
         'language',
         'dark_mode'
     ];
@@ -34,30 +32,69 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+    public function isCurrentUser()
+    {
+        return Auth::check() && Auth::id() === $this->id;
+    }
     public function posts()
     {
-        return $this->hasMany(Post::class, 'created_by');
+        return $this->hasMany(Post::class, 'user_id');
     }
     public function comments()
     {
         return $this->hasMany(Comment::class);
     }
-    // Theo dõi người khác
-    public function following()
+    public function friends()
     {
-        return $this->hasMany(Follow::class, 'follower_id');
+        return $this->hasMany(Friend::class, 'user_id');
     }
-    // Người khác theo dõi
-    public function followers()
+    public function reactions()
     {
-        return $this->hasMany(Follow::class, 'followed_id');
+        return $this->hasMany(Reaction::class);
     }
-    public function setLanguage($value)
+    // Quan hệ n-n giữa User và Hobby thông qua bảng trung gian UserHobby
+    public function hobbies()
     {
-        $this->attributes['language'] = in_array($value, ['en', 'vn']) ? $value : 'en';
+        return $this->belongsToMany(Hobby::class, 'user_hobbies', 'user_id', 'hobby_id');
     }
-    public function setDarkmode($value)
+
+    // Truy cập đến `UserHobby` (bảng trung gian)
+    public function userHobbies()
     {
-        $this->attributes['dark_mode'] = in_array($value, ['light', 'dark'])  ?$value : 'dark';
+        return $this->hasMany(UserHobby::class);
+    }
+    public function profile()
+    {
+        return $this->hasOne(Profile::class);
+    }
+    public function scopeFriendsList(Builder $query, $userId)
+    {
+        return $query->whereIn('id', function ($subQuery) use ($userId) {
+            $subQuery->select('friend_id')
+                ->from('friends')
+                ->where('user_id', $userId)
+                ->where('status', 'accepted');
+        });
+    }
+    // Scope lọc những người không phải là bạn bè của người dùng hiện tại
+    public function scopeNotFriends(Builder $query, $id)
+    {
+        return $query->where('id', '!=', $id) // Loại bỏ chính người dùng hiện tại
+            ->whereNotIn('id', function ($subQuery) use ($id) {
+                $subQuery->select('friend_id')
+                    ->from('friends')
+                    ->where('user_id', $id)
+                    ->union(
+                        $subQuery->newQuery()
+                            ->select('user_id')
+                            ->from('friends')
+                            ->where('friend_id', $id)
+                    );
+            });
+    }
+    // Kiểm tra 2 người có phải bạn bè không
+    public function isFriendWith($userId)
+    {
+        return $this->friends()->where('id', $userId)->exists();
     }
 }

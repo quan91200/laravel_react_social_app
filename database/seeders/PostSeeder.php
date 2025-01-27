@@ -9,12 +9,11 @@ class PostSeeder extends Seeder
 {
     public function run(): void
     {
-         $users = User::all();
+        $users = User::all();
         foreach ($users as $user) {
             for ($i = 0; $i < 1; $i++) {  
                 Post::factory()->count(1)->create([ 
-                    'created_by' => $user->id,
-                    'updated_by' => $user->id,
+                    'user_id' => $user->id,
                 ]);
             }
         }
